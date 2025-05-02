@@ -1,4 +1,3 @@
-
 import http from './httpBase';
 import { AuthCredentials, AuthResponse, User, LoginResponse } from '@/types/User';
 
@@ -38,7 +37,12 @@ export const authService = {
   },
 
   logout: async (): Promise<void> => {
-    await http.post(`${PREFIX}/logout`);
+    try {
+      await http.post(`${PREFIX}/logout`);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Continue with client-side logout even if server logout fails
+    }
 
     // Get project name from env
     const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
@@ -50,6 +54,9 @@ export const authService = {
 
     // Remove user data with project name prefix
     localStorage.removeItem(`${projectName}_user`);
+    
+    // Remove login data
+    localStorage.removeItem(`${projectName}_login_data`);
 
     // DO NOT remove the slug - keep it for future logins
     // const slugKey = `${projectName}_slug`;
@@ -57,13 +64,31 @@ export const authService = {
     // DO NOT: localStorage.removeItem('tenant_slug');
   },
 
-
-    // verifyToken: async (): Promise<boolean> => {
-    //   try {
-    //     const response = await http.get<{ valid: boolean }>(`${PREFIX}/verify-token`);
-    //     return response.data.valid;
-    //   } catch (error) {
-    //     return false;
-    //   }
-    // },
+  // verifyToken: async (): Promise<boolean> => {
+  //   try {
+  //     const response = await http.get<{ valid: boolean }>(`${PREFIX}/verify-token`);
+  //     return response.data.valid;
+  //   } catch (error) {
+  //     return false;
+  //   }
+  // },
+  
+  // Update stored slug only if verification is successful
+  updateSlugIfValid: async (newSlug: string): Promise<boolean> => {
+    try {
+      const tenantData = await authService.verifyTenant(newSlug);
+      if (tenantData && tenantData.tenant_id) {
+        // Save verified slug
+        const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
+        const slugKey = `${projectName}_slug`;
+        localStorage.setItem(slugKey, newSlug);
+        localStorage.setItem('tenant_slug', newSlug);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error verifying tenant slug:', error);
+      return false;
+    }
+  }
 };

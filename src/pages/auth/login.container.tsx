@@ -44,7 +44,7 @@ const LoginContainer = () => {
           navigate('/not-found', { replace: true });
         }
       } else {
-        // No slug provided
+        // No slug provided in URL, try to use stored slug
         const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
         const slugKey = `${projectName}_slug`;
         // Try to get slug with project name prefix first
@@ -59,10 +59,12 @@ const LoginContainer = () => {
           }
         }
 
+        // If we have a slug, redirect to /:slug/login
         if (storedSlug) {
-          navigate(`/${storedSlug}`, { replace: true });
+          navigate(`/${storedSlug}/login`, { replace: true });
         } else {
           setTenantVerified(false);
+          navigate('/not-found', { replace: true });
         }
       }
     };

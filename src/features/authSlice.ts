@@ -123,15 +123,10 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      // Call logout service (commented out, but we'll keep it for future use)
-      // await authService.logout();
-      
       // Use the authService logout method which preserves the slug
       await authService.logout();
       
       // No need to manually navigate here - we'll handle navigation in the component
-      // Don't do: window.location.href = '/login';
-      
       return;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Logout failed');

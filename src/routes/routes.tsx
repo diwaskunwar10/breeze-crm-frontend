@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -23,10 +22,14 @@ const AppRoutes = () => {
       }
     >
       <Routes>
-        {/* Public Routes - slug-based routes first */}
-        <Route path="/:slug" element={<LoginContainer />} />
+        {/* Public Routes with slug */}
+        <Route path="/:slug" element={<Navigate to="/:slug/login" replace />} />
+        <Route path="/:slug/login" element={<LoginContainer />} />
+        <Route path="/:slug/register" element={<RegisterContainer />} />
+        
+        {/* Fallback for direct login/register access */}
         <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="/register" element={<RegisterContainer />} />
+        <Route path="/register" element={<Navigate to="/" replace />} />
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
@@ -39,12 +42,27 @@ const AppRoutes = () => {
           </Route>
         </Route>
 
-        {/* Default routes */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Default root route - redirects based on auth state */}
+        <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );
+};
+
+// Component to handle root route redirects
+const RootRedirect = () => {
+  const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
+  const slugKey = `${projectName}_slug`;
+  const slug = localStorage.getItem(slugKey) || localStorage.getItem('tenant_slug');
+  
+  // If we have a saved slug, redirect to /:slug/login
+  if (slug) {
+    return <Navigate to={`/${slug}/login`} replace />;
+  }
+  
+  // Otherwise, show 404
+  return <NotFound />;
 };
 
 export default AppRoutes;

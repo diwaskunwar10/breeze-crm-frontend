@@ -43,7 +43,7 @@ const PrivateRoute = () => {
     const slug = localStorage.getItem(slugKey) || localStorage.getItem('tenant_slug') || '';
     
     if (slug) {
-      return <Navigate to={`/${slug}`} replace />;
+      return <Navigate to={`/${slug}/login`} replace />;
     }
     return <Navigate to="/" replace />;
   }

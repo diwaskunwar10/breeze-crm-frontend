@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -36,7 +37,7 @@ const SidebarLayout = () => {
     
     // Navigate to the slug route after logout is complete
     if (slug) {
-      navigate(`/${slug}`);
+      navigate(`/${slug}/login`);
     } else {
       navigate('/');
     }
