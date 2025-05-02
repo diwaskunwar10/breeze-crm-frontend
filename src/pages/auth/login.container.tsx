@@ -19,13 +19,19 @@ const LoginContainer = () => {
   useEffect(() => {
     // Clear any previous auth errors when component mounts
     dispatch(clearAuthError());
-    
+
     // Verify the tenant slug
     const verifyTenant = async () => {
       if (slug) {
         try {
           const tenantData = await authService.verifyTenant(slug);
           if (tenantData && tenantData.tenant_id) {
+            // Get project name from env
+            const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
+            // Save slug with project name prefix
+            const slugKey = `${projectName}_slug`;
+            localStorage.setItem(slugKey, slug);
+            // Also keep the original tenant_slug for backward compatibility
             localStorage.setItem('tenant_slug', slug);
             setTenantVerified(true);
           } else {
@@ -39,7 +45,20 @@ const LoginContainer = () => {
         }
       } else {
         // No slug provided
-        const storedSlug = localStorage.getItem('tenant_slug');
+        const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
+        const slugKey = `${projectName}_slug`;
+        // Try to get slug with project name prefix first
+        let storedSlug = localStorage.getItem(slugKey);
+
+        // If not found, try the original key as fallback
+        if (!storedSlug) {
+          storedSlug = localStorage.getItem('tenant_slug');
+          // If found in the old format, migrate it to the new format
+          if (storedSlug) {
+            localStorage.setItem(slugKey, storedSlug);
+          }
+        }
+
         if (storedSlug) {
           navigate(`/${storedSlug}`, { replace: true });
         } else {
@@ -64,11 +83,11 @@ const LoginContainer = () => {
       return;
     }
 
-    const resultAction = await dispatch(login({ 
-      ...credentials, 
-      client_id: slug 
+    const resultAction = await dispatch(login({
+      ...credentials,
+      client_id: slug
     }));
-    
+
     if (login.fulfilled.match(resultAction)) {
       navigate('/dashboard');
     }
@@ -89,14 +108,14 @@ const LoginContainer = () => {
   }
 
   return (
-    <AuthLayout 
-      title="Welcome back" 
+    <AuthLayout
+      title="Welcome back"
       subtitle={`Sign in to your account - ${slug}`}
     >
-      <LoginComponent 
-        onSubmit={handleSubmit} 
-        isLoading={isLoading} 
-        error={error} 
+      <LoginComponent
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+        error={error}
       />
     </AuthLayout>
   );

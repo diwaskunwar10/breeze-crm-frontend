@@ -30,10 +30,9 @@ const SidebarLayout = () => {
 
   const navigationItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Customers', path: '/customers', icon: <Users size={20} /> },
-    { name: 'Analytics', path: '/analytics', icon: <BarChart3 size={20} /> },
-    { name: 'Messages', path: '/messages', icon: <MessageSquare size={20} /> },
-    { name: 'Calendar', path: '/calendar', icon: <Calendar size={20} /> },
+    { name: 'Channels', path: '/channels', icon: <MessageSquare size={20} /> },
+    {name:"Playground",path:"/playground",icon:<MessageSquare size={20} />},
+    
     { name: 'Settings', path: '/settings', icon: <Settings size={20} /> }
   ];
 
