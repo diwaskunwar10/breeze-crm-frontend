@@ -20,11 +20,18 @@ const LoginContainer = () => {
     // Clear any previous auth errors when component mounts
     dispatch(clearAuthError());
 
-    // Verify the tenant slug
+    // Verify the tenant slug - only once per component mount
     const verifyTenant = async () => {
+      // Prevent multiple verification attempts
+      if (tenantVerified !== null) {
+        return; // Already verified or failed
+      }
+
       if (slug) {
         try {
+          // Make a single API call to verify the tenant
           const tenantData = await authService.verifyTenant(slug);
+
           if (tenantData && tenantData.tenant_id) {
             // Get project name from env
             const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
@@ -35,16 +42,18 @@ const LoginContainer = () => {
             localStorage.setItem('tenant_slug', slug);
             setTenantVerified(true);
           } else {
+            // Invalid tenant - set state and navigate once
             setTenantVerified(false);
             navigate('/not-found', { replace: true });
           }
         } catch (error) {
+          // Error during verification - set state and navigate once
           console.error('Error verifying tenant:', error);
           setTenantVerified(false);
           navigate('/not-found', { replace: true });
         }
       } else {
-        // No slug provided in URL, try to use stored slug
+        // No slug provided in URL, try to use stored slug - only once
         const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
         const slugKey = `${projectName}_slug`;
         // Try to get slug with project name prefix first
@@ -59,10 +68,11 @@ const LoginContainer = () => {
           }
         }
 
-        // If we have a slug, redirect to /:slug/login
+        // If we have a slug, redirect to /:slug/login - only once
         if (storedSlug) {
-          navigate(`/${storedSlug}/login`, { replace: true });
+          navigate(`/${storedSlug}`, { replace: true });
         } else {
+          // No slug found - set state and navigate once
           setTenantVerified(false);
           navigate('/not-found', { replace: true });
         }
@@ -85,13 +95,33 @@ const LoginContainer = () => {
       return;
     }
 
-    const resultAction = await dispatch(login({
-      ...credentials,
-      client_id: slug
-    }));
+    // Get project name from env
+    const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
 
-    if (login.fulfilled.match(resultAction)) {
-      navigate('/dashboard');
+    // Save slug with project name prefix BEFORE login attempt - only once
+    // This ensures we have the slug even if login fails
+    const slugKey = `${projectName}_slug`;
+    localStorage.setItem(slugKey, slug);
+    localStorage.setItem('tenant_slug', slug);
+
+    try {
+      // Attempt login only once
+      const resultAction = await dispatch(login({
+        ...credentials,
+        client_id: slug
+      }));
+
+      if (login.fulfilled.match(resultAction)) {
+        // Login successful - navigate to dashboard
+        navigate('/dashboard');
+      } else if (login.rejected.match(resultAction)) {
+        // Login failed - don't retry, just show the error
+        console.error('Login failed:', resultAction.payload);
+      }
+    } catch (error) {
+      // Handle any unexpected errors
+      console.error('Unexpected error during login:', error);
+      toast.error('An unexpected error occurred. Please try again later.');
     }
   };
 

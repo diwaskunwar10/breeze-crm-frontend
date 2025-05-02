@@ -59,10 +59,18 @@ const loadAuthState = (): AuthState => {
     // Remove login data with project name prefix
     localStorage.removeItem(`${projectName}_login_data`);
 
-    // DO NOT remove the slug - keep it for future logins
+    // ⚠️ IMPORTANT: NEVER REMOVE THE SLUG - keep it for future logins ⚠️
     // const slugKey = `${projectName}_slug`;
-    // DO NOT: localStorage.removeItem(slugKey);
-    // DO NOT: localStorage.removeItem('tenant_slug');
+    // ❌ NEVER DO THIS: localStorage.removeItem(slugKey);
+    // ❌ NEVER DO THIS: localStorage.removeItem('tenant_slug');
+
+    // Instead, ensure the slug is preserved by getting the current value
+    const currentSlug = localStorage.getItem(`${projectName}_slug`) || localStorage.getItem('tenant_slug');
+    if (currentSlug) {
+      // Re-save it to ensure it's not lost
+      localStorage.setItem(`${projectName}_slug`, currentSlug);
+      localStorage.setItem('tenant_slug', currentSlug);
+    }
 
     console.warn('Incomplete auth data found. Cleaned up auth state but preserved slug.');
   }
@@ -101,6 +109,13 @@ export const login = createAsyncThunk(
         localStorage.setItem(`${projectName}_slug`, loginResponse.tenant_slug);
         // Also keep the original slug for backward compatibility
         localStorage.setItem('tenant_slug', loginResponse.tenant_slug);
+      } else {
+        // If tenant_slug is not in the response, try to use the client_id as slug
+        if (credentials.client_id) {
+          localStorage.setItem(`${projectName}_slug`, credentials.client_id);
+          localStorage.setItem('tenant_slug', credentials.client_id);
+        }
+        // If neither is available, DO NOT delete existing slug
       }
 
       // Save user data with project name prefix
@@ -125,7 +140,7 @@ export const logout = createAsyncThunk(
     try {
       // Use the authService logout method which preserves the slug
       await authService.logout();
-      
+
       // No need to manually navigate here - we'll handle navigation in the component
       return;
     } catch (error: any) {
@@ -187,10 +202,18 @@ export const validateAuthState = createAsyncThunk(
       // Remove login data with project name prefix
       localStorage.removeItem(`${projectName}_login_data`);
 
-      // DO NOT remove the slug - keep it for future logins
+      // ⚠️ IMPORTANT: NEVER REMOVE THE SLUG - keep it for future logins ⚠️
       // const slugKey = `${projectName}_slug`;
-      // DO NOT: localStorage.removeItem(slugKey);
-      // DO NOT: localStorage.removeItem('tenant_slug');
+      // ❌ NEVER DO THIS: localStorage.removeItem(slugKey);
+      // ❌ NEVER DO THIS: localStorage.removeItem('tenant_slug');
+
+      // Instead, ensure the slug is preserved by getting the current value
+      const currentSlug = localStorage.getItem(`${projectName}_slug`) || localStorage.getItem('tenant_slug');
+      if (currentSlug) {
+        // Re-save it to ensure it's not lost
+        localStorage.setItem(`${projectName}_slug`, currentSlug);
+        localStorage.setItem('tenant_slug', currentSlug);
+      }
 
       console.warn('Incomplete auth data found. Cleaned up auth state but preserved slug.');
 
@@ -262,7 +285,15 @@ const authSlice = createSlice({
         // Remove login data with project name prefix
         localStorage.removeItem(`${projectName}_login_data`);
 
-        // DO NOT remove the slug - keep it for future logins
+        // ⚠️ IMPORTANT: NEVER REMOVE THE SLUG - keep it for future logins ⚠️
+
+        // Instead, ensure the slug is preserved by getting the current value
+        const currentSlug = localStorage.getItem(`${projectName}_slug`) || localStorage.getItem('tenant_slug');
+        if (currentSlug) {
+          // Re-save it to ensure it's not lost
+          localStorage.setItem(`${projectName}_slug`, currentSlug);
+          localStorage.setItem('tenant_slug', currentSlug);
+        }
 
         console.warn('Incomplete auth data found. Cleaned up auth state but preserved slug.');
       }
