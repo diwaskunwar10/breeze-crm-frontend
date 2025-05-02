@@ -1,4 +1,3 @@
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authService } from '@/api/auth.service';
 import { AuthCredentials, User, LoginResponse } from '@/types/User';
@@ -120,34 +119,19 @@ export const login = createAsyncThunk(
   }
 );
 
-
 export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
+      // Call logout service (commented out, but we'll keep it for future use)
       // await authService.logout();
-
-      // Get project name from env
-      const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
-
-      // Remove token with project name prefix
-      localStorage.removeItem(`${projectName}_token`);
-      // Also remove the original token for backward compatibility
-      localStorage.removeItem('token');
-
-      // Remove user data with project name prefix
-      localStorage.removeItem(`${projectName}_user`);
-
-      // Remove login data with project name prefix
-      localStorage.removeItem(`${projectName}_login_data`);
-
-      // DO NOT remove the slug - keep it for future logins
-      // const slugKey = `${projectName}_slug`;
-      // DO NOT: localStorage.removeItem(slugKey);
-      // DO NOT: localStorage.removeItem('tenant_slug');
-
-      window.location.href = '/login';
-
+      
+      // Use the authService logout method which preserves the slug
+      await authService.logout();
+      
+      // No need to manually navigate here - we'll handle navigation in the component
+      // Don't do: window.location.href = '/login';
+      
       return;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Logout failed');

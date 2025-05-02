@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAppSelector, useAppDispatch } from '@/redux/store';
@@ -23,9 +22,24 @@ const SidebarLayout = () => {
   const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logout());
+    
+    // Get project name from env
+    const projectName = import.meta.env.VITE_PROJECT_NAME || 'chat_demo';
+    
+    // Get the saved slug (we know it exists since we preserve it during logout)
+    const slugKey = `${projectName}_slug`;
+    const slug = localStorage.getItem(slugKey) || localStorage.getItem('tenant_slug') || '';
+    
+    // Navigate to the slug route after logout is complete
+    if (slug) {
+      navigate(`/${slug}`);
+    } else {
+      navigate('/');
+    }
   };
 
   const navigationItems = [
