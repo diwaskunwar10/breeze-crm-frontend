@@ -43,7 +43,7 @@ const LoginComponent = ({ onSubmit, isLoading, error }: LoginComponentProps) => 
           <Input
             id="email"
             name="email"
-            type="email"
+            type="text"
             placeholder="johndoe@example.com"
             autoComplete="email"
             required
