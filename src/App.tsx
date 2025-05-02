@@ -1,27 +1,25 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+import { Provider } from 'react-redux';
+import { store } from '@/redux/store';
+import { AppProvider } from './context/AppContext';
+import Routes from './routes/routes';
+import { Toaster } from 'sonner';
+import { BrowserRouter } from 'react-router-dom';
+import AppModal from './components/AppModal';
+import './index.css';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <Provider store={store}>
+      <AppProvider>
+        <BrowserRouter>
+          <Routes />
+          <Toaster position="top-right" />
+          <AppModal />
+        </BrowserRouter>
+      </AppProvider>
+    </Provider>
+  );
+};
 
 export default App;
