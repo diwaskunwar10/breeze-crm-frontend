@@ -4,13 +4,13 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import PrivateRoute from './PrivateRoute';
 import SidebarLayout from '@/components/layout/SidebarLayout';
+import NotFound from '@/pages/NotFound';
 
 // Lazy-loaded page components
 const LoginContainer = lazy(() => import('@/pages/auth/login.container'));
 const RegisterContainer = lazy(() => import('@/pages/auth/register.container'));
 const DashboardContainer = lazy(() => import('@/pages/dashboard/dashboard.container'));
 const CustomersContainer = lazy(() => import('@/pages/customers/customers.container'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
 
 const AppRoutes = () => {
   return (
@@ -22,8 +22,9 @@ const AppRoutes = () => {
       }
     >
       <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<LoginContainer />} />
+        {/* Public Routes - slug-based routes first */}
+        <Route path="/:slug" element={<LoginContainer />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/register" element={<RegisterContainer />} />
 
         {/* Protected Routes */}

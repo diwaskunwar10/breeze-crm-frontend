@@ -1,21 +1,55 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
 import { login, clearAuthError } from '@/features/authSlice';
 import { AuthCredentials } from '@/types/User';
 import LoginComponent from './login.component';
 import AuthLayout from '@/components/layout/AuthLayout';
+import { authService } from '@/api/auth.service';
+import { toast } from 'sonner';
 
 const LoginContainer = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { slug } = useParams();
   const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [tenantVerified, setTenantVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Clear any previous auth errors when component mounts
     dispatch(clearAuthError());
-  }, [dispatch]);
+    
+    // Verify the tenant slug
+    const verifyTenant = async () => {
+      if (slug) {
+        try {
+          const tenantData = await authService.verifyTenant(slug);
+          if (tenantData && tenantData.tenant_id) {
+            localStorage.setItem('tenant_slug', slug);
+            setTenantVerified(true);
+          } else {
+            setTenantVerified(false);
+            navigate('/not-found', { replace: true });
+          }
+        } catch (error) {
+          console.error('Error verifying tenant:', error);
+          setTenantVerified(false);
+          navigate('/not-found', { replace: true });
+        }
+      } else {
+        // No slug provided
+        const storedSlug = localStorage.getItem('tenant_slug');
+        if (storedSlug) {
+          navigate(`/${storedSlug}`, { replace: true });
+        } else {
+          setTenantVerified(false);
+        }
+      }
+    };
+
+    verifyTenant();
+  }, [dispatch, navigate, slug]);
 
   useEffect(() => {
     // Redirect to dashboard if already authenticated
@@ -25,16 +59,39 @@ const LoginContainer = () => {
   }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (credentials: AuthCredentials) => {
-    const resultAction = await dispatch(login(credentials));
+    if (!slug) {
+      toast.error('Invalid tenant. Please check the URL.');
+      return;
+    }
+
+    const resultAction = await dispatch(login({ 
+      ...credentials, 
+      client_id: slug 
+    }));
+    
     if (login.fulfilled.match(resultAction)) {
       navigate('/dashboard');
     }
   };
 
+  // Show loading while verifying tenant
+  if (tenantVerified === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show not found if tenant verification failed
+  if (tenantVerified === false) {
+    return null; // This will be handled by the navigation to NotFound
+  }
+
   return (
     <AuthLayout 
       title="Welcome back" 
-      subtitle="Sign in to your account"
+      subtitle={`Sign in to your account - ${slug}`}
     >
       <LoginComponent 
         onSubmit={handleSubmit} 

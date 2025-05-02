@@ -21,7 +21,7 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials: AuthCredentials, { rejectWithValue }) => {
+  async (credentials: AuthCredentials & { client_id?: string }, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
       localStorage.setItem('token', response.token);
