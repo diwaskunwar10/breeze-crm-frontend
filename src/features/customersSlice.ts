@@ -29,7 +29,7 @@ const initialState: CustomerState = {
 
 export const fetchCustomers = createAsyncThunk(
   'customers/fetchCustomers',
-  async (filters?: CustomerFilters, { rejectWithValue }) => {
+  async (filters: CustomerFilters | undefined, { rejectWithValue }) => {
     try {
       const customers = await customerService.getAll(filters);
       return customers;
