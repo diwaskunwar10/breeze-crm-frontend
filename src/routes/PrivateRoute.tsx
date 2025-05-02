@@ -2,45 +2,30 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/redux/store';
 import { useEffect, useState } from 'react';
-import { getCurrentUser } from '@/features/authSlice';
-import { authService } from '@/api/auth.service';
 
 const PrivateRoute = () => {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [isValid, setIsValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const verifyAuth = async () => {
+    const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      if (!token) {
-        setIsVerifying(false);
-        return;
+      
+      if (token && !user) {
+        // If we have a token but no user, fetch the user data
+          // If fetching user fails, the token is likely invalid
+          localStorage.removeItem('token');
       }
-
-      try {
-        // Verify token validity
-        const isTokenValid = await authService.verifyToken();
-        setIsValid(isTokenValid);
-        
-        // If token is valid but user info is not loaded, fetch user info
-        if (isTokenValid && !user) {
-          await dispatch(getCurrentUser());
-        }
-      } catch (error) {
-        setIsValid(false);
-        localStorage.removeItem('token');
-      } finally {
-        setIsVerifying(false);
-      }
+      
+      setIsLoading(false);
     };
 
-    verifyAuth();
+    checkAuth();
   }, [dispatch, user]);
 
-  // Show loading state while verifying
-  if (isVerifying) {
+  // Show loading state while checking auth
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
@@ -48,12 +33,12 @@ const PrivateRoute = () => {
     );
   }
 
-  // If not authenticated or token is invalid, redirect to login
-  if (!isAuthenticated || !isValid) {
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // If authenticated and token is valid, render the route
+  // If authenticated, render the route
   return <Outlet />;
 };
 
